@@ -20,9 +20,8 @@ class Image:
     def __init__(self, w, h, data):
         self.w = w
         self.h = h
-        size = w * h
         self.layers = []
-        nlayers = len(data) / size
+        size = w * h
         while len(data) != 0:
             self.layers.append(Layer(w, data[0:size]))
             data = data[size:]
