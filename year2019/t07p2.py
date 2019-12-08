@@ -3,22 +3,26 @@ class Program:
         self.source = source
         self.inputs = []
         self.outputs = []
+        self.end = False
         self.i = 0
 
-    def run(self, inputs):
-        self.inputs = inputs
-        self.i = 0
+    def run(self):
+        self.outputs = []
         while True:
             opcode = self.source[self.i] % 100
             if opcode == 1: self.add()
             if opcode == 2: self.multiply()
-            if opcode == 3: self.input()
+            if opcode == 3:
+                if len(self.inputs) == 0: return 
+                self.input()
             if opcode == 4: self.output()
             if opcode == 5: self.jumpIfTrue()
             if opcode == 6: self.jumpIfFalse()
             if opcode == 7: self.lessThan()
             if opcode == 8: self.equals()
-            if opcode == 99: return
+            if opcode == 99: 
+                self.end = True
+                return
 
     def getModes(self, n):
         opcode = str(self.source[self.i]).zfill(n)[0:n-2]
@@ -88,26 +92,33 @@ class Program:
         self.move(4)
 
 class Amplifier:
-    def __init__(self, values, size, feedback = False):
+    def __init__(self, values, size, settings):
         i = 0
         self.programs = []
         self.result = 0
-        self.feedback = feedback
         while i < size:
             self.programs.append(Program([] + values))
+            self.programs[i].inputs.append(settings[i])
             i += 1
 
-    def run(self, settings):
-        if not self.feedback: self.result = 0
+        self.programs[0].inputs.append(0)
 
+    def isRunning(self):
+        lastProgram = self.programs[len(self.programs) - 1]
+        return not lastProgram.end 
+
+    def run(self):
+        outputs = []
         i = 0
-        while i < len(self.programs):
-            program = self.programs[i]
-            inputs = [settings[i], self.result]
-            print(f'Running program {i} with {inputs}')
-            program.run(inputs)
-            self.result = program.outputs[0]
+        n = len(self.programs)
+        while self.isRunning():
+            program = self.programs[i%n]
+            program.inputs.extend(outputs)
+            program.run()
+            outputs = program.outputs
             i += 1
+
+        self.result = program.outputs[0]
 
 def getConfigurations(settings):
     cfg = []
@@ -119,21 +130,17 @@ def getConfigurations(settings):
         subsettings.remove(settings[i])
         for c in getConfigurations(subsettings):
             cfg.append([settings[i]] + c)
-        
         i += 1
 
     return cfg
 
 def run(args):
     values = list(map(lambda x: int(x), args[0].split(',')))
-    amplifier = Amplifier(values, 5, True)
     configurations = getConfigurations([5,6,7,8,9])
     results = []
-    result = 0
     for settings in configurations:
-        amplifier.run(settings)
+        amplifier = Amplifier([] + values, 5, settings)
+        amplifier.run()
         results.append(amplifier.result)
-        settings = nextSetting(settings)
-        print(f'AMP(E): {amplifier.result}, running with new settings {settings}')
 
     return max(results)
