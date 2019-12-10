@@ -1,6 +1,6 @@
 import lib.loadinput
 import config
-import year2019.t10.p1 as task
+import year2019.t10.p2 as task
 
 year = 2019
 day = 10
