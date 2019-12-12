@@ -7,7 +7,10 @@ class Point:
 	def getMagnitude(self):
 		return abs(self.x) + abs(self.y) + abs(self.z)
 
-	def toString(self):
+	def fastHash(self):
+		return self.x * 10000 + self.y * 100 + self.z
+
+	def slowHash(self):
 		return f'{self.x}{self.y}{self.z}'
 
 class Body:
@@ -35,8 +38,11 @@ class Body:
 	def getEnergy(self):
 		return self.pos.getMagnitude() * self.vel.getMagnitude()
 
-	def toString(self):
-		return f'{self.pos.toString()}{self.vel.toString()}'
+	def fastHash(self):
+		return self.pos.fastHash() * 10000 + self.vel.fastHash()
+
+	def slowHash(self):
+		return f'{self.pos.slowHash()}{self.vel.slowHash()}'
 
 class System:
 	def __init__(self, bodies):
@@ -52,8 +58,11 @@ class System:
 	def getEnergy(self):
 		return sum(b.getEnergy() for b in self.bodies)
 
-	def toString(self):
-		return ''.join(b.toString() for b in self.bodies)
+	def fastHash(self):
+		return sum(b.fastHash() for b in self.bodies)
+
+	def slowHash(self):
+		return ''.join(b.slowHash() for b in self.bodies)
 		
 def parseBody(text):
 	text = text.replace('>', '').replace('<', '').replace(' ','')
@@ -66,11 +75,13 @@ def parseBody(text):
 def run(args):
 	bodies = list(parseBody(text) for text in args)	
 	s = System(bodies)
-	cfg = set()
+	fast = set()
+	slow = set()
 	while True:
-		if s.toString() in cfg: return len(cfg)
-		if len(cfg) > 4686774924: return 'Error'
-		if len(cfg) % 10000 == 0: print(f'Attempt {len(cfg)}')
+		if s.fastHash() in fast and s.slowHash in slow: return len(cfg)
+		if len(fast) > 4686774924: return 'Error'
+		if len(fast) % 10000 == 0: print(f'Attempt {len(cfg)}')
 
-		cfg.add(s.toString())
+		fast.add(s.fastHash())
+		slow.add(s.slowHash())
 		s.step()
