@@ -119,13 +119,8 @@ class Point:
         self.x = x
         self.y = y
 
-    def at(self, other):
-        return self.x == other.x and self.y == other.y
-
-class Tile:
-    def __init__(self, pos):
-        self.pos = pos
-        self.color = 0
+    def asKey(self):
+        return f'{self.x},{self.y}'
 
 class Robot:
     def __init__(self):
@@ -141,27 +136,41 @@ class Robot:
         self.move()
 
     def move(self):
-        if self.facing == 0: self.pos.y += 1
+        if self.facing == 0: self.pos.y -= 1
         elif self.facing == 1: self.pos.x += 1
-        elif self.facing == 2: self.pos.y -= 1
+        elif self.facing == 2: self.pos.y += 1
         else: self.pos.x -= 1
+
+def printTiles(tiles):
+    xvals = list(map(lambda k: int(k.split(',')[0]), tiles))
+    yvals = list(map(lambda k: int(k.split(',')[1]), tiles))
+    minx = min(xvals)
+    maxx = max(xvals) + 1
+    miny = min(yvals)
+    maxy = max(yvals) + 1
+
+    for i in range(miny, maxy):
+        for j in range(minx, maxx):
+            key = Point(j,i).asKey()
+            if not key in tiles: yield '.'
+            else: yield '#' if tiles[key] == 1 else '.'
+        yield '\n'
 
 def run(args):
     values = list(map(lambda x: int(x), args[0].split(',')))
     p = Program(values)
     p.run()
     robot = Robot()
-    tiles = []
+    tiles = dict()
+    tiles['0,0'] = 1
     while not p.end:
-        found = list(filter(lambda x: x.pos.at(robot.pos), tiles))
-        if len(found) == 0: tiles.append(Tile(copy.copy(robot.pos)))
+        key = robot.pos.asKey()
+        if not key in tiles: tiles[key] = 0
         
-        tile = list(filter(lambda x: x.pos.at(robot.pos), tiles))[0]
-        p.inputs = [tile.color]
+        p.inputs = [tiles[key]]
         p.run()
-        tile.color = p.outputs[0]
-        print(f'Painted tile at ({tile.pos.x},{tile.pos.y}) {"black" if tile.color == 0 else "white"}')
+        tiles[key] = p.outputs[0]
         if p.outputs[1] == 0: robot.turnLeft()
         else: robot.turnRight()
 
-    return len(tiles)
+    return ''.join(printTiles(tiles))
