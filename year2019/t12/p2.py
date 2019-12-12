@@ -8,7 +8,7 @@ class Point:
 		return abs(self.x) + abs(self.y) + abs(self.z)
 
 	def toString(self):
-		return f'({self.x},{self.y},{self.z})'
+		return f'{self.x}{self.y}{self.z}'
 
 class Body:
 	def __init__(self, pos, vel):
@@ -63,13 +63,14 @@ def parseBody(text):
 	z = int(pointsTxt[2].split('=')[1])
 	return Body(Point(x, y, z), Point(0, 0, 0))
 	
-def partOne(args, n):
+def run(args):
 	bodies = list(parseBody(text) for text in args)	
 	s = System(bodies)
-	for i in range(0, n): s.step()
-	
-	return s
-	
-def run(args):
-	s = partOne(args, 1000)
-	return s.getEnergy()
+	cfg = set()
+	while True:
+		if s.toString() in cfg: return len(cfg)
+		if len(cfg) > 4686774924: return 'Error'
+		if len(cfg) % 10000 == 0: print(f'Attempt {len(cfg)}')
+
+		cfg.add(s.toString())
+		s.step()
