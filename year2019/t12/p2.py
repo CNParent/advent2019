@@ -1,6 +1,6 @@
-import time
+import math
 from itertools import product
-		
+
 def parseBody(text):
 	text = text.replace('>', '').replace('<', '').replace(' ','')
 	pointsTxt = text.split(',')
@@ -14,28 +14,23 @@ def delta(a, b):
 	elif a < b: return 1
 	else: return -1
 
+def getCount(o, s, i):
+	count = 0
+	while True:
+		count += 1
+		for a, b in product(s, s): a[i + 3] += delta(a[i], b[i])
+		for a in s: a[i] += a[i + 3]
+		if all(o[n][i] == s[n][i] and o[n][i + 3] == s[n][i + 3] for n in range(0, len(o))): return count
+
 def run(args):
 	o = list(parseBody(text) for text in args)
 	s = list(parseBody(text) for text in args)
-	n = 0
-	tgrav = 0
-	tmove = 0
-	tcomp = 0
-	ts = time.time()
-	while True:
-		n += 1
-		then = time.time()	
-		for a, b, i in product(s, s, range(0, 3)):
-			a[i + 3] += delta(a[i], b[i])
-		tgrav += time.time() - then
+	t = []
+	for i in range(0,3): 
+		t.append(getCount(o, s, i))
 
-		then = time.time()
-		for a, i in product(s, range(0, 3)):
-			a[i] += a[i + 3]
-		tmove += time.time() - then
+	while len(t) > 1:
+		t[0] = int(t[0] * t[1] / math.gcd(t[0], t[1]))
+		t.remove(t[1])
 
-		then = time.time()
-		if all(o[i][j] == s[i][j] for i, j in product(range(0, 4), range(0, 6))): return n
-		if n > 1000000: return f'Process took {time.time() - ts} to reach 1 000 000 iterations. tgrav={tgrav} tmove={tmove} tcomp={tcomp}'
-		if n % 1000 == 0: print(f'{n} of {4686774924}', end='\r', flush=True)
-		tcomp += time.time() - then
+	return t[0]
